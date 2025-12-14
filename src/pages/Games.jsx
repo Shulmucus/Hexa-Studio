@@ -7,22 +7,32 @@ import Footer from '../components/Footer';
 const Games = () => {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('');
+  const [isError, setIsError] = useState(false);
 
   const handleJoinWaitlist = async (e) => {
     e.preventDefault();
     setStatus('Sending...');
+    setIsError(false);
     
-    // Ensure you have a 'waitlist' table in Supabase
-    const { error } = await supabase
-      .from('waitlist')
-      .insert([{ email }]);
+    try {
+      // 1. Check if Supabase is connected (Debug Step)
+      if (!supabase) throw new Error("Supabase client not initialized. Check .env file.");
 
-    if (error) {
-        console.error(error);
-        setStatus('Error joining list.');
-    } else {
-        setStatus('Welcome to the coven.');
-        setEmail('');
+      // 2. Attempt Insert
+      const { error } = await supabase
+        .from('waitlist')
+        .insert([{ email }]);
+
+      if (error) throw error;
+
+      // Success
+      setStatus('Welcome to the coven.');
+      setEmail('');
+    } catch (error) {
+      console.error("Supabase Error:", error);
+      setIsError(true);
+      // Display the ACTUAL error message to help debug
+      setStatus(error.message || 'Unknown error occurred');
     }
   };
 
@@ -63,12 +73,13 @@ const Games = () => {
                         <Gamepad2 size={64} className="text-zinc-700 group-hover:text-amber-600 transition-colors duration-500" />
                     </div>
                     
-                    <img src="/Conceptart.png" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
+                    {/* Fallback image logic or remove src if no image exists locally */}
+                    <img src="/Conceptart.png" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500" onError={(e) => e.target.style.display='none'} />
 
                     <div className="absolute bottom-8 left-8 z-10">
                          <div className="flex gap-2 mb-2">
                              <span className="px-2 py-1 bg-amber-600 text-black text-[10px] font-bold uppercase">Roguelike</span>
-                             <span className="px-2 py-1 bg-zinc-700 text-white text-[10px] font-bold uppercase">Soulslike</span>
+                             <span className="px-2 py-1 bg-zinc-700 text-white text-[10px] font-bold uppercase">Action RPG</span>
                          </div>
                     </div>
                     {/* Gradient Overlay */}
@@ -110,7 +121,12 @@ const Games = () => {
                             Join <ArrowRight size={14} />
                         </button>
                         </form>
-                        {status && <p className="mt-3 text-xs text-emerald-400 font-mono">{status}</p>}
+                        {/* Status Message - Red for error, Green for success */}
+                        {status && (
+                            <p className={`mt-3 text-xs font-mono ${isError ? 'text-red-500' : 'text-emerald-400'}`}>
+                                {status}
+                            </p>
+                        )}
                     </div>
                 </div>
             </motion.div>
@@ -123,7 +139,7 @@ const Games = () => {
               className="opacity-30 flex flex-col items-center justify-center py-20 border border-dashed border-zinc-800 rounded-xl"
             >
                  <h3 className="text-2xl font-black text-zinc-700 mb-2">PROJECT: UNNAMED</h3>
-                 <p className="text-zinc-600 text-sm tracking-widest uppercase">Coming In The Future</p>
+                 <p className="text-zinc-600 text-sm tracking-widest uppercase">Coming 2026</p>
             </motion.div>
 
         </div>
