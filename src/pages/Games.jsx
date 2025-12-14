@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Gamepad2, Mail, ArrowRight } from 'lucide-react';
+import { Gamepad2, Mail, ArrowRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Footer from '../components/Footer';
 
@@ -14,16 +14,28 @@ const Games = () => {
     setStatus('Sending...');
     setIsError(false);
     
+    // 1. Normalize the email: Convert to lowercase and remove spaces
+    const normalizedEmail = email.toLowerCase().trim();
+    
     try {
-      // 1. Check if Supabase is connected (Debug Step)
-      if (!supabase) throw new Error("Supabase client not initialized. Check .env file.");
+      if (!supabase) {
+        throw new Error("Supabase is not connected. Check your console (F12) for details.");
+      }
 
-      // 2. Attempt Insert
+      // 2. Send the normalized email
       const { error } = await supabase
         .from('waitlist')
-        .insert([{ email }]);
+        .insert([{ email: normalizedEmail }]);
 
-      if (error) throw error;
+      if (error) {
+        // Postgres Error 23505 = Unique Violation (Duplicate Entry)
+        if (error.code === '23505') {
+            setStatus('You are already on the list.');
+            setIsError(true); 
+            return; 
+        }
+        throw error; 
+      }
 
       // Success
       setStatus('Welcome to the coven.');
@@ -31,8 +43,12 @@ const Games = () => {
     } catch (error) {
       console.error("Supabase Error:", error);
       setIsError(true);
-      // Display the ACTUAL error message to help debug
-      setStatus(error.message || 'Unknown error occurred');
+      
+      if (error.message === 'Failed to fetch') {
+        setStatus('Network blocked. Please disable AdBlock/Brave Shields.');
+      } else {
+        setStatus(error.message || 'Unknown error occurred');
+      }
     }
   };
 
@@ -73,16 +89,14 @@ const Games = () => {
                         <Gamepad2 size={64} className="text-zinc-700 group-hover:text-amber-600 transition-colors duration-500" />
                     </div>
                     
-                    {/* Fallback image logic or remove src if no image exists locally */}
                     <img src="/Conceptart.png" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500" onError={(e) => e.target.style.display='none'} />
 
                     <div className="absolute bottom-8 left-8 z-10">
                          <div className="flex gap-2 mb-2">
                              <span className="px-2 py-1 bg-amber-600 text-black text-[10px] font-bold uppercase">Roguelike</span>
-                             <span className="px-2 py-1 bg-zinc-700 text-white text-[10px] font-bold uppercase">Action RPG</span>
+                             <span className="px-2 py-1 bg-zinc-700 text-white text-[10px] font-bold uppercase">Soulslike</span>
                          </div>
                     </div>
-                    {/* Gradient Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
                 </div>
 
@@ -121,11 +135,13 @@ const Games = () => {
                             Join <ArrowRight size={14} />
                         </button>
                         </form>
-                        {/* Status Message - Red for error, Green for success */}
+                        
+                        {/* Status Message */}
                         {status && (
-                            <p className={`mt-3 text-xs font-mono ${isError ? 'text-red-500' : 'text-emerald-400'}`}>
-                                {status}
-                            </p>
+                            <div className={`mt-4 flex items-center gap-2 text-xs font-mono p-2 rounded ${isError ? 'bg-amber-900/20 text-amber-200' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                                {isError ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
+                                <span>{status}</span>
+                            </div>
                         )}
                     </div>
                 </div>
