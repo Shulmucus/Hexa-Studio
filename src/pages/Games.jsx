@@ -186,7 +186,7 @@ const Games = () => {
               className="opacity-30 flex flex-col items-center justify-center py-20 border border-dashed border-zinc-800 rounded-xl"
             >
                  <h3 className="text-2xl font-black text-zinc-700 mb-2">PROJECT: UNNAMED</h3>
-                 <p className="text-zinc-600 text-sm tracking-widest uppercase">Coming 2026</p>
+                 <p className="text-zinc-600 text-sm tracking-widest uppercase">Coming 2027</p>
             </motion.div>
 
         </div>
